@@ -7,7 +7,7 @@
 <meta name="description" content="対人円環の相補性理論とラポール理論にもとづく、20問1問ずつの対人スタイル診断。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -21,16 +21,15 @@
         <circle cx="150" cy="150" r="120" class="dial-ring dial-ring--outer"></circle>
         <circle cx="150" cy="150" r="80" class="dial-ring dial-ring--mid"></circle>
         <circle cx="150" cy="150" r="40" class="dial-ring dial-ring--inner"></circle>
-        <g class="dial-ticks"></g>
       </svg>
     </div>
 
     <div class="start-content">
-      <p class="eyebrow">INTERPERSONAL COMPASS · 対人スタイル診断</p>
+      <p class="eyebrow">対人スタイル診断</p>
       <h1 class="display-title">話が合う人には、<br>理由がある。</h1>
       <p class="lede">
-        対人円環の相補性理論と、ラポール理論。ふたつの確立した心理学理論にもとづいて、
-        あなたの対人スタイルを20の質問から読み解きます。
+        「対人円環の相補性理論」と「ラポール理論」。ふたつの心理学理論をもとに、
+        20個の質問からあなたの対人スタイルをやさしく診断します。
       </p>
 
       <dl class="fact-row">
@@ -65,21 +64,12 @@
     <div class="quiz-body" id="quiz-body">
       <div class="question-card" id="question-card">
         <p class="question-prompt" id="q-prompt">Loading…</p>
-
-        <div class="slider-wrap">
+        <div class="choice-wrap">
           <div class="pole pole--left" id="pole-left">…</div>
-
-          <div class="slider-track-wrap">
-            <input type="range" min="1" max="5" step="1" value="3" class="slider" id="q-slider" aria-label="回答スライダー">
-            <div class="slider-ticks" aria-hidden="true">
-              <span></span><span></span><span></span><span></span><span></span>
-            </div>
-          </div>
-
+          <div class="choice-row" id="choice-row"></div>
           <div class="pole pole--right" id="pole-right">…</div>
         </div>
-
-        <p class="slider-hint">スライダーを動かして選ぶと、自動的に次の質問へ進みます</p>
+        <p class="slider-hint">気持ちに近いところをタップすると、自動的に次の質問へ進みます</p>
       </div>
     </div>
   </section>
@@ -91,7 +81,7 @@
         <circle cx="60" cy="60" r="50" class="calc-spinner__track"></circle>
         <circle cx="60" cy="60" r="50" class="calc-spinner__arc"></circle>
       </svg>
-      <p class="calc-label">対人円環上の位置を計算しています…</p>
+      <p class="calc-label">あなたの対人スタイルを診断しています…</p>
     </div>
   </section>
 
@@ -100,7 +90,7 @@
     <div class="result-scroll">
 
       <div class="result-hero" id="result-hero">
-        <p class="eyebrow" id="result-energy-label">ENERGY</p>
+        <p class="eyebrow" id="result-energy-label">エネルギータイプ</p>
         <h1 class="display-title display-title--result" id="result-name">タイプ名</h1>
         <p class="result-tagline" id="result-tagline">タグライン</p>
       </div>
@@ -119,7 +109,7 @@
           <circle id="compass-dot" cx="150" cy="150" r="7" class="compass-dot"></circle>
           <circle cx="150" cy="150" r="3" class="compass-center"></circle>
         </svg>
-        <p class="compass-caption">対人円環上でのあなたの位置。針の長さは傾向の明瞭さをあらわします。</p>
+        <p class="compass-caption">対人円環上でのあなたの位置。針の長さは傾向のはっきりさをあらわします。</p>
       </div>
 
       <div class="result-block">

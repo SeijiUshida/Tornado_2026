@@ -23,11 +23,6 @@
   const progressBar = el('progressbar');
   const qCurrent = el('q-current');
   const btnBack = el('btn-back');
-  const quizBody = el('quiz-body');
-  const qPrompt = el('q-prompt');
-  const poleLeft = el('pole-left');
-  const poleRight = el('pole-right');
-  const slider = el('q-slider');
 
   // ------------------------------------------------------------
   // Utilities
@@ -62,40 +57,32 @@
   }
 
   // ------------------------------------------------------------
-  // Decorative compass ticks (start screen + result screen)
+  // Compass ticks (result screen)
   // ------------------------------------------------------------
-  function buildTicks(groupEl, { withLabels }) {
+  function buildTicks(groupEl) {
+    if (!groupEl) return;
     groupEl.innerHTML = '';
     Object.values(COMPASS_POINTS).forEach(({ angle, label }) => {
       const inner = polarToXY(angle, 122);
-      const outer = polarToXY(angle, 132);
+      const outer = polarToXY(angle, 130);
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       line.setAttribute('x1', inner.x);
       line.setAttribute('y1', inner.y);
       line.setAttribute('x2', outer.x);
       line.setAttribute('y2', outer.y);
-      line.setAttribute('class', 'compass-tick-mark');
-      line.setAttribute('stroke', 'currentColor');
-      line.setAttribute('stroke-width', '1.5');
-      line.style.color = 'var(--brass)';
-      line.style.opacity = '0.6';
+      line.setAttribute('stroke', 'var(--coral)');
+      line.setAttribute('stroke-width', '2');
+      line.style.opacity = '0.5';
       groupEl.appendChild(line);
 
-      if (withLabels) {
-        const labelPos = polarToXY(angle, 147);
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', labelPos.x);
-        text.setAttribute('y', labelPos.y);
-        text.setAttribute('class', 'compass-tick-label');
-        text.textContent = label;
-        groupEl.appendChild(text);
-      }
+      const labelPos = polarToXY(angle, 145);
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', labelPos.x);
+      text.setAttribute('y', labelPos.y);
+      text.setAttribute('class', 'compass-tick-label');
+      text.textContent = label;
+      groupEl.appendChild(text);
     });
-  }
-
-  function initAmbientDial() {
-    const g = document.querySelector('#screen-start .dial-ticks');
-    if (g) buildTicks(g, { withLabels: false });
   }
 
   // ------------------------------------------------------------
@@ -121,28 +108,41 @@
 
     card.innerHTML = `
       <p class="question-prompt">${q.prompt}</p>
-      <div class="slider-wrap">
+      <div class="choice-wrap">
         <div class="pole pole--left">${q.left}</div>
-        <div class="slider-track-wrap">
-          <input type="range" min="1" max="5" step="1" value="${answers[q.id] || 3}" class="slider" id="q-slider" aria-label="回答スライダー">
-          <div class="slider-ticks" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-        </div>
+        <div class="choice-row" id="choice-row"></div>
         <div class="pole pole--right">${q.right}</div>
       </div>
-      <p class="slider-hint">スライダーを動かして選ぶと、自動的に次の質問へ進みます</p>
+      <p class="slider-hint">気持ちに近いところをタップすると、自動的に次の質問へ進みます</p>
     `;
 
-    const newSlider = card.querySelector('#q-slider');
-    let advanced = false;
-    const commit = () => {
-      if (advanced) return;
-      advanced = true;
-      answers[q.id] = Number(newSlider.value);
-      setTimeout(next, 320);
-    };
-    newSlider.addEventListener('change', commit);
-    newSlider.addEventListener('keyup', (e) => {
-      if (e.key === 'Enter') commit();
+    const row = card.querySelector('#choice-row');
+    const selected = answers[q.id] || null;
+    let advanceTimer = null;
+
+    [1, 2, 3, 4, 5].forEach((val, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'choice-btn';
+      btn.dataset.value = String(val);
+      btn.setAttribute('aria-label', `5段階中${val}`);
+      if (selected === val) btn.dataset.selected = 'true';
+
+      btn.addEventListener('click', () => {
+        row.querySelectorAll('.choice-btn').forEach((b) => delete b.dataset.selected);
+        btn.dataset.selected = 'true';
+        answers[q.id] = val;
+        updateProgress();
+        if (advanceTimer) clearTimeout(advanceTimer);
+        advanceTimer = setTimeout(next, 380);
+      });
+
+      row.appendChild(btn);
+      if (i < 4) {
+        const connector = document.createElement('div');
+        connector.className = 'choice-connector';
+        row.appendChild(connector);
+      }
     });
 
     qCurrent.textContent = String(index + 1);
@@ -258,11 +258,11 @@
     if (isBalance) {
       hero.removeAttribute('data-energy');
       compassSvg.removeAttribute('data-energy');
-      energyLabelEl.textContent = 'BALANCED';
+      energyLabelEl.textContent = 'バランスタイプ';
     } else {
       hero.setAttribute('data-energy', result.energyDir);
       compassSvg.setAttribute('data-energy', result.energyDir);
-      energyLabelEl.textContent = type.energyLabel.toUpperCase();
+      energyLabelEl.textContent = type.energyLabel;
     }
 
     el('result-name').textContent = type.name;
@@ -317,35 +317,35 @@
     if (!lastResult) return;
     const isBalance = !lastResult.axisKey;
     const type = isBalance ? BALANCE_TYPE : TYPE_DATA[`${lastResult.axisKey}_${lastResult.energyDir}`];
-    const accent = isBalance ? '#c9a34a' : lastResult.energyDir === 'fast' ? '#ef7a5a' : '#4fa89f';
+    const accent = isBalance ? '#ffc857' : lastResult.energyDir === 'fast' ? '#ff8a63' : '#4fb3a6';
 
     try {
-      await document.fonts.load('800 64px "Shippori Mincho"');
+      await document.fonts.load('900 64px "Zen Maru Gothic"');
       await document.fonts.load('500 28px "Zen Kaku Gothic New"');
-      await document.fonts.load('500 22px "JetBrains Mono"');
+      await document.fonts.load('700 44px "Zen Maru Gothic"');
     } catch (e) { /* fonts may already be cached */ }
 
     const canvas = el('share-canvas');
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
 
-    // background
-    const bgGrad = ctx.createRadialGradient(W / 2, H * 0.1, 40, W / 2, H * 0.1, W);
-    bgGrad.addColorStop(0, '#1a2540');
-    bgGrad.addColorStop(1, '#0d1220');
+    // background — soft cream
+    const bgGrad = ctx.createRadialGradient(W / 2, H * 0.08, 40, W / 2, H * 0.08, W);
+    bgGrad.addColorStop(0, '#fff2e6');
+    bgGrad.addColorStop(1, '#fff8ef');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, W, H);
 
     // compass rings (mini signature graphic)
     const cx = W / 2, cy = 430, rings = [140, 220, 300];
-    ctx.strokeStyle = 'rgba(201,163,74,0.35)';
+    ctx.strokeStyle = 'rgba(255,138,99,0.28)';
     ctx.lineWidth = 2;
     rings.forEach((r) => {
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.stroke();
     });
-    ctx.strokeStyle = 'rgba(201,163,74,0.2)';
+    ctx.strokeStyle = 'rgba(255,138,99,0.16)';
     ctx.beginPath(); ctx.moveTo(cx, cy - 300); ctx.lineTo(cx, cy + 300); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(cx - 300, cy); ctx.lineTo(cx + 300, cy); ctx.stroke();
 
@@ -361,22 +361,22 @@
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(nx, ny); ctx.stroke();
     ctx.fillStyle = accent;
     ctx.beginPath(); ctx.arc(nx, ny, 14, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#cfc6b6';
+    ctx.fillStyle = '#93857a';
     ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
 
     // eyebrow
     ctx.textAlign = 'center';
     ctx.fillStyle = accent;
-    ctx.font = '600 26px "JetBrains Mono", monospace';
-    ctx.fillText('INTERPERSONAL COMPASS', W / 2, 130);
+    ctx.font = '700 28px "Zen Kaku Gothic New", sans-serif';
+    ctx.fillText('対人スタイル診断', W / 2, 130);
 
     // type name
-    ctx.fillStyle = '#e8c876';
-    ctx.font = '800 76px "Shippori Mincho", serif';
+    ctx.fillStyle = '#3d332c';
+    ctx.font = '900 76px "Zen Maru Gothic", sans-serif';
     ctx.fillText(type.name, W / 2, 230);
 
     // tagline (wrapped)
-    ctx.fillStyle = '#f3ece0';
+    ctx.fillStyle = '#3d332c';
     ctx.font = '500 30px "Zen Kaku Gothic New", sans-serif';
     ctx.textAlign = 'left';
     wrapText(ctx, type.tagline, 110, 850, W - 220, 46);
@@ -384,18 +384,18 @@
     // best match
     if (!isBalance) {
       ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(243,236,224,0.6)';
-      ctx.font = '500 22px "JetBrains Mono", monospace';
-      ctx.fillText('BEST MATCH', W / 2, 1120);
-      ctx.fillStyle = '#e8c876';
-      ctx.font = '700 44px "Shippori Mincho", serif';
+      ctx.fillStyle = '#93857a';
+      ctx.font = '700 24px "Zen Kaku Gothic New", sans-serif';
+      ctx.fillText('最も相性がよいタイプ', W / 2, 1120);
+      ctx.fillStyle = accent;
+      ctx.font = '900 44px "Zen Maru Gothic", sans-serif';
       ctx.fillText(type.bestMatch, W / 2, 1180);
     }
 
     // footer
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(243,236,224,0.5)';
-    ctx.font = '500 22px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#93857a';
+    ctx.font = '500 22px "Zen Kaku Gothic New", sans-serif';
     ctx.fillText('対人スタイル診断 — Interpersonal Compass', W / 2, H - 60);
 
     canvas.toBlob((blob) => {
@@ -414,8 +414,7 @@
   // Wire up
   // ------------------------------------------------------------
   function init() {
-    initAmbientDial();
-    buildTicks(el('compass-ticks'), { withLabels: true });
+    buildTicks(el('compass-ticks'));
 
     el('btn-start').addEventListener('click', startQuiz);
     el('btn-back').addEventListener('click', back);
