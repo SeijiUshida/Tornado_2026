@@ -56,8 +56,9 @@
         <div class="progress-fill" id="progress-fill"></div>
       </div>
       <div class="quiz-header__meta">
+        <button class="btn-text btn-text--back" id="btn-back" type="button" disabled>← 前の質問</button>
         <span class="quiz-count"><span id="q-current">1</span><span class="quiz-count__slash">/</span>20</span>
-        <button class="btn-text" id="btn-back" type="button" disabled>← 前の質問</button>
+        <button class="btn-text btn-text--next" id="btn-next" type="button" disabled>次の質問 →</button>
       </div>
     </header>
 
@@ -65,9 +66,11 @@
       <div class="question-card" id="question-card">
         <p class="question-prompt" id="q-prompt">Loading…</p>
         <div class="choice-wrap">
-          <div class="pole pole--left" id="pole-left">…</div>
+          <div class="pole-row">
+            <div class="pole pole--left" id="pole-left">…</div>
+            <div class="pole pole--right" id="pole-right">…</div>
+          </div>
           <div class="choice-row" id="choice-row"></div>
-          <div class="pole pole--right" id="pole-right">…</div>
         </div>
         <p class="slider-hint">気持ちに近いところをタップすると、自動的に次の質問へ進みます</p>
       </div>
@@ -95,21 +98,9 @@
         <p class="result-tagline" id="result-tagline">タグライン</p>
       </div>
 
-      <div class="compass-panel">
-        <svg viewBox="0 0 300 300" class="compass-svg" id="compass-svg" role="img" aria-label="対人円環コンパス">
-          <circle cx="150" cy="150" r="120" class="compass-ring compass-ring--outer"></circle>
-          <circle cx="150" cy="150" r="80"  class="compass-ring compass-ring--mid"></circle>
-          <circle cx="150" cy="150" r="40"  class="compass-ring compass-ring--inner"></circle>
-          <line x1="150" y1="30" x2="150" y2="270" class="compass-axis"></line>
-          <line x1="30" y1="150" x2="270" y2="150" class="compass-axis"></line>
-
-          <g class="compass-ticks" id="compass-ticks"></g>
-
-          <line id="compass-needle" x1="150" y1="150" x2="150" y2="150" class="compass-needle"></line>
-          <circle id="compass-dot" cx="150" cy="150" r="7" class="compass-dot"></circle>
-          <circle cx="150" cy="150" r="3" class="compass-center"></circle>
-        </svg>
-        <p class="compass-caption">対人円環上でのあなたの位置。針の長さは傾向のはっきりさをあらわします。</p>
+      <div class="result-illustration" id="result-illustration">
+        <img class="result-illustration__img" id="result-illustration-img" alt="" />
+        <div class="result-illustration__fallback" id="result-illustration-fallback"></div>
       </div>
 
       <div class="result-block">

@@ -202,6 +202,7 @@ body::before {
 }
 .btn-text:hover:not(:disabled) { color: var(--coral); }
 .btn-text:disabled { opacity: 0.35; cursor: default; }
+.btn-text--next { text-align: right; }
 
 /* ============================================================
    2. Quiz screen
@@ -253,9 +254,25 @@ body::before {
   justify-content: center;
 }
 
-.choice-wrap { display: flex; flex-direction: column; gap: 20px; align-items: stretch; }
+.choice-wrap { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
 
-.pole { font-size: 14px; line-height: 1.6; color: var(--ink-dim); text-align: center; padding: 0 6px; font-weight: 500; }
+/* 左右のラベルは常に横並び。選択肢ボタンの並び(左=1〜右=5)と視覚的な向きを一致させる */
+.pole-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pole {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+  font-weight: 500;
+  flex: 1 1 0;
+}
+.pole--left { text-align: left; }
+.pole--right { text-align: right; }
 
 .choice-row {
   display: flex;
@@ -340,25 +357,36 @@ body::before {
 .result-hero[data-energy="fast"] .eyebrow { color: var(--coral); }
 .result-hero[data-energy="slow"] .eyebrow { color: var(--mint); }
 
-.compass-panel {
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  background: var(--cream-card);
+/* タイプ別イラスト挿入エリア。画像未設定時はイニシャル入りの丸アイコンで代替表示する。
+   実際のイラストは assets/illustrations/<type_code>.png を用意し、
+   app.js の renderResult() 内でパスを差し込むだけで自動的に切り替わる。 */
+.result-illustration {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: linear-gradient(160deg, var(--coral-soft), var(--cream-deep));
   border: 1px solid var(--line);
-  border-radius: 24px;
-  padding: 20px;
-  width: 100%;
 }
-.compass-svg { width: min(260px, 74vw); height: min(260px, 74vw); }
-.compass-ring { fill: none; stroke: var(--line); stroke-width: 1.2; }
-.compass-axis { stroke: var(--line); stroke-width: 1.2; }
-.compass-tick-label { font-family: var(--font-body); font-size: 10px; font-weight: 700; fill: var(--ink-dim); text-anchor: middle; dominant-baseline: middle; }
-.compass-needle { stroke: var(--coral); stroke-width: 3; stroke-linecap: round; transition: all 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.compass-dot { fill: var(--coral); stroke: #fff; stroke-width: 2; transition: all 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.compass-center { fill: var(--ink-dim); }
-.compass-svg[data-energy="fast"] .compass-needle, .compass-svg[data-energy="fast"] .compass-dot { stroke: var(--coral); fill: var(--coral); }
-.compass-svg[data-energy="slow"] .compass-needle, .compass-svg[data-energy="slow"] .compass-dot { stroke: var(--mint); fill: var(--mint); }
-
-.compass-caption { font-size: 12px; color: var(--ink-dim); text-align: center; max-width: 36ch; }
+.result-illustration__img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: none;
+}
+.result-illustration__img[data-loaded="true"] { display: block; }
+.result-illustration__fallback {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--coral);
+}
+.result-illustration[data-energy="slow"] { background: linear-gradient(160deg, var(--mint-soft), var(--cream-deep)); }
+.result-illustration[data-energy="slow"] .result-illustration__fallback { color: var(--mint); }
 
 .result-block { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 .block-title { font-size: 13px; font-weight: 700; color: var(--coral); }
@@ -385,8 +413,5 @@ body::before {
    ============================================================ */
 
 @media (min-width: 720px) {
-  .choice-wrap { flex-direction: row; align-items: center; }
-  .pole { flex: 0 0 150px; }
-  .choice-row { flex: 1; }
   .result-actions { flex-direction: row; }
 }

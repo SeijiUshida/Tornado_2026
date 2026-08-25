@@ -23,6 +23,7 @@
   const progressBar = el('progressbar');
   const qCurrent = el('q-current');
   const btnBack = el('btn-back');
+  const btnNext = el('btn-next');
 
   // ------------------------------------------------------------
   // Utilities
@@ -46,43 +47,6 @@
       else s.removeAttribute('data-active');
     });
     window.scrollTo({ top: 0, behavior: 'auto' });
-  }
-
-  function polarToXY(angleDeg, radius, cx = 150, cy = 150) {
-    const rad = (angleDeg * Math.PI) / 180;
-    return {
-      x: cx + radius * Math.sin(rad),
-      y: cy - radius * Math.cos(rad),
-    };
-  }
-
-  // ------------------------------------------------------------
-  // Compass ticks (result screen)
-  // ------------------------------------------------------------
-  function buildTicks(groupEl) {
-    if (!groupEl) return;
-    groupEl.innerHTML = '';
-    Object.values(COMPASS_POINTS).forEach(({ angle, label }) => {
-      const inner = polarToXY(angle, 122);
-      const outer = polarToXY(angle, 130);
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', inner.x);
-      line.setAttribute('y1', inner.y);
-      line.setAttribute('x2', outer.x);
-      line.setAttribute('y2', outer.y);
-      line.setAttribute('stroke', 'var(--coral)');
-      line.setAttribute('stroke-width', '2');
-      line.style.opacity = '0.5';
-      groupEl.appendChild(line);
-
-      const labelPos = polarToXY(angle, 145);
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', labelPos.x);
-      text.setAttribute('y', labelPos.y);
-      text.setAttribute('class', 'compass-tick-label');
-      text.textContent = label;
-      groupEl.appendChild(text);
-    });
   }
 
   // ------------------------------------------------------------
@@ -109,9 +73,11 @@
     card.innerHTML = `
       <p class="question-prompt">${q.prompt}</p>
       <div class="choice-wrap">
-        <div class="pole pole--left">${q.left}</div>
+        <div class="pole-row">
+          <div class="pole pole--left">${q.left}</div>
+          <div class="pole pole--right">${q.right}</div>
+        </div>
         <div class="choice-row" id="choice-row"></div>
-        <div class="pole pole--right">${q.right}</div>
       </div>
       <p class="slider-hint">気持ちに近いところをタップすると、自動的に次の質問へ進みます</p>
     `;
@@ -133,6 +99,7 @@
         btn.dataset.selected = 'true';
         answers[q.id] = val;
         updateProgress();
+        btnNext.disabled = false;
         if (advanceTimer) clearTimeout(advanceTimer);
         advanceTimer = setTimeout(next, 380);
       });
@@ -147,6 +114,7 @@
 
     qCurrent.textContent = String(index + 1);
     btnBack.disabled = index === 0;
+    btnNext.disabled = !(q.id in answers);
     updateProgress();
   }
 
@@ -171,6 +139,14 @@
     if (index === 0) return;
     index--;
     renderQuestion('back');
+  }
+
+  // 「次の質問へ」ボタン：戻って確認したあと、選択し直さずに先へ進むためのもの。
+  // まだ未回答の質問では使えない（回答した瞬間の自動遷移が唯一の進め方）。
+  function goNextButton() {
+    const q = order[index];
+    if (!(q.id in answers)) return;
+    next();
   }
 
   // ------------------------------------------------------------
@@ -249,19 +225,17 @@
 
   function renderResult(result) {
     const isBalance = !result.axisKey;
-    const type = isBalance ? BALANCE_TYPE : TYPE_DATA[`${result.axisKey}_${result.energyDir}`];
+    const typeCode = isBalance ? 'balance' : `${result.axisKey}_${result.energyDir}`;
+    const type = isBalance ? BALANCE_TYPE : TYPE_DATA[typeCode];
 
     const hero = el('result-hero');
-    const compassSvg = el('compass-svg');
     const energyLabelEl = el('result-energy-label');
 
     if (isBalance) {
       hero.removeAttribute('data-energy');
-      compassSvg.removeAttribute('data-energy');
       energyLabelEl.textContent = 'バランスタイプ';
     } else {
       hero.setAttribute('data-energy', result.energyDir);
-      compassSvg.setAttribute('data-energy', result.energyDir);
       energyLabelEl.textContent = type.energyLabel;
     }
 
@@ -278,18 +252,28 @@
       el('best-match-name').textContent = type.bestMatch;
     }
 
-    // ---- Compass needle ----
-    const minR = 18, maxR = 110;
-    const clampedAmp = Math.min(result.amplitude, 2);
-    const radius = minR + (clampedAmp / 2) * (maxR - minR);
-    const pos = polarToXY(result.theta0, radius);
+    renderIllustration(typeCode, type, isBalance ? null : result.energyDir);
+  }
 
-    const needle = el('compass-needle');
-    needle.setAttribute('x2', pos.x);
-    needle.setAttribute('y2', pos.y);
-    const dot = el('compass-dot');
-    dot.setAttribute('cx', pos.x);
-    dot.setAttribute('cy', pos.y);
+  // ------------------------------------------------------------
+  // タイプ別イラスト（結果画面上部）
+  // 画像は assets/illustrations/<typeCode>.png を配置するだけで自動的に使われる。
+  // 未配置の間は、タイプ名の頭文字を丸アイコンで代替表示する。
+  // ------------------------------------------------------------
+  function renderIllustration(typeCode, type, energyDir) {
+    const container = el('result-illustration');
+    const img = el('result-illustration-img');
+    const fallback = el('result-illustration-fallback');
+
+    if (energyDir) container.setAttribute('data-energy', energyDir);
+    else container.removeAttribute('data-energy');
+
+    fallback.textContent = type.name.charAt(0);
+    img.alt = type.name;
+    img.removeAttribute('data-loaded');
+    img.onload = () => { img.dataset.loaded = 'true'; };
+    img.onerror = () => { img.removeAttribute('data-loaded'); img.removeAttribute('src'); };
+    img.src = `assets/illustrations/${typeCode}.png`;
   }
 
   // ------------------------------------------------------------
@@ -336,50 +320,36 @@
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, W, H);
 
-    // compass rings (mini signature graphic)
-    const cx = W / 2, cy = 430, rings = [140, 220, 300];
-    ctx.strokeStyle = 'rgba(255,138,99,0.28)';
-    ctx.lineWidth = 2;
-    rings.forEach((r) => {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.stroke();
-    });
-    ctx.strokeStyle = 'rgba(255,138,99,0.16)';
-    ctx.beginPath(); ctx.moveTo(cx, cy - 300); ctx.lineTo(cx, cy + 300); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx - 300, cy); ctx.lineTo(cx + 300, cy); ctx.stroke();
-
-    // needle
-    const clampedAmp = Math.min(lastResult.amplitude, 2);
-    const radius = 40 + (clampedAmp / 2) * 220;
-    const rad = (lastResult.theta0 * Math.PI) / 180;
-    const nx = cx + radius * Math.sin(rad);
-    const ny = cy - radius * Math.cos(rad);
+    // タイプアイコン（丸背景 + 頭文字）— 将来的にタイプ別イラストへ差し替え可能な仮表示
+    const cx = W / 2, cy = 340, r = 130;
+    ctx.fillStyle = accent + '22';
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = accent;
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(nx, ny); ctx.stroke();
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = accent;
-    ctx.beginPath(); ctx.arc(nx, ny, 14, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#93857a';
-    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 108px "Zen Maru Gothic", sans-serif';
+    ctx.fillText(type.name.charAt(0), cx, cy + 8);
+    ctx.textBaseline = 'alphabetic';
 
     // eyebrow
     ctx.textAlign = 'center';
     ctx.fillStyle = accent;
     ctx.font = '700 28px "Zen Kaku Gothic New", sans-serif';
-    ctx.fillText('対人スタイル診断', W / 2, 130);
+    ctx.fillText('対人スタイル診断', W / 2, 560);
 
     // type name
     ctx.fillStyle = '#3d332c';
     ctx.font = '900 76px "Zen Maru Gothic", sans-serif';
-    ctx.fillText(type.name, W / 2, 230);
+    ctx.fillText(type.name, W / 2, 660);
 
     // tagline (wrapped)
     ctx.fillStyle = '#3d332c';
     ctx.font = '500 30px "Zen Kaku Gothic New", sans-serif';
     ctx.textAlign = 'left';
-    wrapText(ctx, type.tagline, 110, 850, W - 220, 46);
+    wrapText(ctx, type.tagline, 110, 780, W - 220, 46);
 
     // best match
     if (!isBalance) {
@@ -414,10 +384,9 @@
   // Wire up
   // ------------------------------------------------------------
   function init() {
-    buildTicks(el('compass-ticks'));
-
     el('btn-start').addEventListener('click', startQuiz);
     el('btn-back').addEventListener('click', back);
+    el('btn-next').addEventListener('click', goNextButton);
     el('btn-share').addEventListener('click', shareImage);
     el('btn-retake').addEventListener('click', startQuiz);
   }
