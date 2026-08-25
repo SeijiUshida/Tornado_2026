@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>対人スタイル診断 | Interpersonal Compass</title>
+<meta name="description" content="対人円環の相補性理論とラポール理論にもとづく、20問1問ずつの対人スタイル診断。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ 1. スタート画面 ============ -->
+  <section class="screen" id="screen-start" data-active="true">
+    <div class="dial-ambient" aria-hidden="true">
+      <svg viewBox="0 0 300 300" class="dial-ambient__svg">
+        <circle cx="150" cy="150" r="120" class="dial-ring dial-ring--outer"></circle>
+        <circle cx="150" cy="150" r="80" class="dial-ring dial-ring--mid"></circle>
+        <circle cx="150" cy="150" r="40" class="dial-ring dial-ring--inner"></circle>
+        <g class="dial-ticks"></g>
+      </svg>
+    </div>
+
+    <div class="start-content">
+      <p class="eyebrow">INTERPERSONAL COMPASS · 対人スタイル診断</p>
+      <h1 class="display-title">話が合う人には、<br>理由がある。</h1>
+      <p class="lede">
+        対人円環の相補性理論と、ラポール理論。ふたつの確立した心理学理論にもとづいて、
+        あなたの対人スタイルを20の質問から読み解きます。
+      </p>
+
+      <dl class="fact-row">
+        <div class="fact"><dt>設問数</dt><dd>20問</dd></div>
+        <div class="fact"><dt>所要時間</dt><dd>約3分</dd></div>
+        <div class="fact"><dt>結果タイプ</dt><dd>全17種</dd></div>
+      </dl>
+
+      <button class="btn btn--primary btn--large" id="btn-start" type="button">
+        診断をはじめる
+      </button>
+
+      <p class="fine-print">
+        回答はこの端末の中だけで計算され、どこにも送信されません。診断は医学的・臨床的な性格分析ではなく、
+        性格は変化しうるものとして扱っています。
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 2. 質問画面 ============ -->
+  <section class="screen" id="screen-quiz">
+    <header class="quiz-header">
+      <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0" id="progressbar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="quiz-header__meta">
+        <span class="quiz-count"><span id="q-current">1</span><span class="quiz-count__slash">/</span>20</span>
+        <button class="btn-text" id="btn-back" type="button" disabled>← 前の質問</button>
+      </div>
+    </header>
+
+    <div class="quiz-body" id="quiz-body">
+      <div class="question-card" id="question-card">
+        <p class="question-prompt" id="q-prompt">Loading…</p>
+
+        <div class="slider-wrap">
+          <div class="pole pole--left" id="pole-left">…</div>
+
+          <div class="slider-track-wrap">
+            <input type="range" min="1" max="5" step="1" value="3" class="slider" id="q-slider" aria-label="回答スライダー">
+            <div class="slider-ticks" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+
+          <div class="pole pole--right" id="pole-right">…</div>
+        </div>
+
+        <p class="slider-hint">スライダーを動かして選ぶと、自動的に次の質問へ進みます</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. 計算中画面 ============ -->
+  <section class="screen" id="screen-calculating">
+    <div class="calc-content">
+      <svg viewBox="0 0 120 120" class="calc-spinner" aria-hidden="true">
+        <circle cx="60" cy="60" r="50" class="calc-spinner__track"></circle>
+        <circle cx="60" cy="60" r="50" class="calc-spinner__arc"></circle>
+      </svg>
+      <p class="calc-label">対人円環上の位置を計算しています…</p>
+    </div>
+  </section>
+
+  <!-- ============ 4. 結果画面 ============ -->
+  <section class="screen" id="screen-result">
+    <div class="result-scroll">
+
+      <div class="result-hero" id="result-hero">
+        <p class="eyebrow" id="result-energy-label">ENERGY</p>
+        <h1 class="display-title display-title--result" id="result-name">タイプ名</h1>
+        <p class="result-tagline" id="result-tagline">タグライン</p>
+      </div>
+
+      <div class="compass-panel">
+        <svg viewBox="0 0 300 300" class="compass-svg" id="compass-svg" role="img" aria-label="対人円環コンパス">
+          <circle cx="150" cy="150" r="120" class="compass-ring compass-ring--outer"></circle>
+          <circle cx="150" cy="150" r="80"  class="compass-ring compass-ring--mid"></circle>
+          <circle cx="150" cy="150" r="40"  class="compass-ring compass-ring--inner"></circle>
+          <line x1="150" y1="30" x2="150" y2="270" class="compass-axis"></line>
+          <line x1="30" y1="150" x2="270" y2="150" class="compass-axis"></line>
+
+          <g class="compass-ticks" id="compass-ticks"></g>
+
+          <line id="compass-needle" x1="150" y1="150" x2="150" y2="150" class="compass-needle"></line>
+          <circle id="compass-dot" cx="150" cy="150" r="7" class="compass-dot"></circle>
+          <circle cx="150" cy="150" r="3" class="compass-center"></circle>
+        </svg>
+        <p class="compass-caption">対人円環上でのあなたの位置。針の長さは傾向の明瞭さをあらわします。</p>
+      </div>
+
+      <div class="result-block">
+        <h2 class="block-title">① どんな人か</h2>
+        <p class="result-body" id="result-body-1"></p>
+      </div>
+
+      <div class="result-block">
+        <h2 class="block-title">② 話が合う相手</h2>
+        <p class="result-body" id="result-body-2"></p>
+      </div>
+
+      <div class="best-match-card" id="best-match-card">
+        <p class="best-match-eyebrow">最も相性がよいタイプ</p>
+        <p class="best-match-name" id="best-match-name">—</p>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn btn--primary btn--large" id="btn-share" type="button">結果をシェア画像として保存</button>
+        <button class="btn btn--ghost btn--large" id="btn-retake" type="button">もう一度診断する</button>
+      </div>
+
+      <p class="fine-print fine-print--result">
+        ※本診断は医学的・臨床的な性格分析ではありません。性格は固定的なものではなく変化しうるため、
+        気になったときにいつでも再診断できます。
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<canvas id="share-canvas" width="1080" height="1350" style="display:none;"></canvas>
+
+<script src="js/data-questions.js"></script>
+<script src="js/data-types.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
